@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Blog {
+  id     String @id @default(uuid())
+  titile String
+  userID String
+  user   User   @relation(fields: [userID], references: [id])
+}
+
+model User {
+  id       String @id @default(uuid())
+  userName String
+  password String
+  email String @unique
+  Blog  Blog[]
+}
+
+model Test {
+  id Int @id @default(autoincrement())
+
+  name    String
+  Corrses Corrses[]
+}
+
+model Corrses {
+  id      Int    @id @default(autoincrement())
+  userId  Int
+  corName String
+
+  user Test @relation(fields: [userId], references: [id], onUpdate: Cascade, onDelete: Cascade)
+}
+
+model countries {
+  id             Int     @id
+  name           String? @unique(map: "name") @db.VarChar(20)
+  continent_name String  @db.VarChar(20)
+  users          users[]
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model order_products {
+  order_id   Int?
+  product_id Int?
+  quantity   Int?      @default(0)
+  orders     orders?   @relation(fields: [order_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "order_products_ibfk_1")
+  products   products? @relation(fields: [product_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "order_products_ibfk_2")
+
+  @@index([order_id], map: "order_id")
+  @@index([product_id], map: "product_id")
+  @@ignore
+}
+
+model orders {
+  id             Int              @id
+  user_id        Int?
+  status         String           @db.VarChar(6)
+  created_at     DateTime?        @db.DateTime(0)
+  order_products order_products[] @ignore
+  users          users?           @relation(fields: [user_id], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "orders_ibfk_1")
+
+  @@index([user_id], map: "user_id")
+}
+
+model products {
+  id             Int              @id
+  name           String           @db.VarChar(10)
+  price          Int?             @default(0)
+  status         String?          @db.VarChar(10)
+  created_at     DateTime?        @db.DateTime(0)
+  order_products order_products[] @ignore
+}
+
+model users {
+  id            Int        @id
+  full_name     String?    @db.VarChar(20)
+  email         String?    @unique(map: "email") @db.VarChar(20)
+  gender        String?    @db.Char(1)
+  date_of_birth String?    @db.VarChar(15)
+  created_at    DateTime?  @db.DateTime(0)
+  country_code  Int?
+  orders        orders[]
+  countries     countries? @relation(fields: [country_code], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "users_ibfk_1")
+
+  @@index([country_code], map: "country_code")
+}
